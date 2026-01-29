@@ -1,0 +1,7 @@
+{
+  "name": "Nuestra Boda - Álbum Compartido",
+  "description": "Un elegante álbum de fotos compartido para capturar cada momento especial de tu boda. Los invitados pueden subir fotos y dejar mensajes personalizados en la nube.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
