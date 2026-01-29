@@ -101,17 +101,7 @@ const App = () => {
         </div>
       </nav>
 
-      <div className="fixed bottom-10 right-6 md:right-12 z-50 group">
-        <button
-          onClick={() => setShowUpload(true)}
-          className="relative w-16 h-16 md:w-20 md:h-20 bg-rose-500 rounded-full flex items-center justify-center text-white shadow-xl hover:bg-rose-600 transition-all active:scale-90 pulse-effect"
-        >
-          <div className="flex flex-col items-center">
-            <Camera className="w-6 h-6 md:w-8 md:h-8" />
-            <span className="text-[10px] font-bold uppercase">Subir</span>
-          </div>
-        </button>
-      </div>
+      {/* Eliminado el botón flotante para simplificar la interfaz en móvil */}
 
       <main className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="bg-white border border-[#d0d7de] rounded-lg overflow-hidden shadow-sm">
