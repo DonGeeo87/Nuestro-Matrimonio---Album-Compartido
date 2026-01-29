@@ -52,6 +52,62 @@ export const subscribeToPhotos = (callback: (photos: WeddingPhoto[]) => void) =>
   return () => clearInterval(interval);
 };
 
+// Función auxiliar para comprimir imágenes
+const compressImage = async (file: File): Promise<File> => {
+  if (!file.type.startsWith('image')) return file;
+  if (file.size < 1024 * 1024) return file; // < 1MB ya es ligero
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(file); return; }
+
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+            const newFile = new File([blob], newName, { type: 'image/jpeg', lastModified: Date.now() });
+            console.log(`Compresión: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(newFile.size / 1024 / 1024).toFixed(2)}MB`);
+            resolve(newFile);
+          } else {
+            resolve(file);
+          }
+        }, 'image/jpeg', 0.8);
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+};
+
 export const savePhotoToCloud = async (photo: { file: File; author: string; dedication: string }) => {
   if (!isConfigured) {
     return new Promise((resolve) => {
@@ -74,8 +130,11 @@ export const savePhotoToCloud = async (photo: { file: File; author: string; dedi
     });
   }
 
+  // Comprimir imagen si es necesario
+  const fileToUpload = await compressImage(photo.file);
+
   const formData = new FormData();
-  formData.append('file', photo.file);
+  formData.append('file', fileToUpload);
   formData.append('upload_preset', UPLOAD_PRESET);
   formData.append('tags', WEDDING_TAG);
 
