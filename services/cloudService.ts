@@ -58,53 +58,73 @@ const compressImage = async (file: File): Promise<File> => {
   if (file.size < 1024 * 1024) return file; // < 1MB ya es ligero
 
   return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1200;
-        const MAX_HEIGHT = 1200;
-        let width = img.width;
-        let height = img.height;
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
 
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
-        }
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
 
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { resolve(file); return; }
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 1200;
+            const MAX_HEIGHT = 1200;
+            let width = img.width;
+            let height = img.height;
 
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, width, height);
-        ctx.drawImage(img, 0, 0, width, height);
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+              }
+            }
 
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
-            const newFile = new File([blob], newName, { type: 'image/jpeg', lastModified: Date.now() });
-            console.log(`Compresión: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(newFile.size / 1024 / 1024).toFixed(2)}MB`);
-            resolve(newFile);
-          } else {
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) { resolve(file); return; }
+
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+
+            canvas.toBlob((blob) => {
+              if (blob) {
+                const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+                const newFile = new File([blob], newName, { type: 'image/jpeg', lastModified: Date.now() });
+                console.log(`Compresión exitosa: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(newFile.size / 1024 / 1024).toFixed(2)}MB`);
+                resolve(newFile);
+              } else {
+                resolve(file); // Fallback si falla el blob
+              }
+            }, 'image/jpeg', 0.8);
+          } catch (e) {
+            console.warn("Error durante conversión canvas:fallback original", e);
             resolve(file);
           }
-        }, 'image/jpeg', 0.8);
+        };
+
+        img.onerror = () => {
+          console.warn("Error al cargar imagen: fallback original");
+          resolve(file);
+        };
       };
-      img.onerror = () => resolve(file);
-    };
-    reader.onerror = () => resolve(file);
+
+      reader.onerror = () => {
+        console.warn("Error al leer archivo: fallback original");
+        resolve(file);
+      };
+    } catch (e) {
+      console.warn("Error general en compresión: fallback original", e);
+      resolve(file);
+    }
   });
 };
 

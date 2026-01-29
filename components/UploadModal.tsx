@@ -35,8 +35,8 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUpload }) => {
     try {
       await onUpload({ file, author, dedication });
       onClose();
-    } catch (error) {
-      alert("Error al subir. Inténtalo de nuevo.");
+    } catch (error: any) {
+      alert(`Error al subir: ${error.message || "Inténtalo de nuevo."}`);
     } finally {
       setIsUploading(false);
     }
@@ -54,7 +54,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUpload }) => {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {!preview ? (
-            <div 
+            <div
               onClick={() => !isUploading && fileInputRef.current?.click()}
               className="border-2 border-dashed border-rose-200 rounded-2xl p-12 flex flex-col items-center justify-center gap-4 hover:bg-rose-50 transition-all cursor-pointer group"
             >
@@ -70,11 +70,11 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUpload }) => {
                 <p className="font-medium text-gray-700">Toca para elegir foto o video</p>
                 <p className="text-sm text-gray-400">Captura el amor de Rocío y Matías</p>
               </div>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileChange} 
-                className="hidden" 
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
                 accept="image/*,video/*"
               />
             </div>
@@ -87,7 +87,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUpload }) => {
                   <video src={preview} className="w-full h-full object-contain" controls />
                 )}
                 {!isUploading && (
-                  <button 
+                  <button
                     type="button"
                     onClick={() => { setFile(null); setPreview(null); }}
                     className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full hover:bg-black/70"
@@ -102,8 +102,8 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUpload }) => {
                   <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
                     <Upload className="w-3 h-3" /> Tu Nombre
                   </label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={author}
                     onChange={(e) => setAuthor(e.target.value)}
                     placeholder="¿Quién eres?"
@@ -117,7 +117,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUpload }) => {
                   <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
                     <MessageSquareQuote className="w-3 h-3" /> Tu Dedicatoria
                   </label>
-                  <textarea 
+                  <textarea
                     value={dedication}
                     onChange={(e) => setDedication(e.target.value)}
                     placeholder="Un mensaje para los novios..."
@@ -129,7 +129,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onUpload }) => {
                 </div>
               </div>
 
-              <button 
+              <button
                 type="submit"
                 disabled={isUploading}
                 className="w-full py-4 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold tracking-widest uppercase shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-70"
