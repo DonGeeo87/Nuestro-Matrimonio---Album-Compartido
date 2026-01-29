@@ -1,8 +1,8 @@
 
 import { WeddingPhoto } from '../types.ts';
 
-const CLOUD_NAME = "dzmwybq2v"; 
-const UPLOAD_PRESET: string = "boda_preset"; 
+const CLOUD_NAME = "dzmwybq2v";
+const UPLOAD_PRESET: string = "boda_preset";
 const WEDDING_TAG = "boda_rocio_matias";
 
 const isConfigured = UPLOAD_PRESET !== "TU_UPLOAD_PRESET_AQUÍ";
@@ -15,30 +15,31 @@ export const subscribeToPhotos = (callback: (photos: WeddingPhoto[]) => void) =>
   if (!isConfigured) {
     const saved = localStorage.getItem('wedding_memories_fallback');
     callback(saved ? JSON.parse(saved) : []);
-    return () => {};
+    return () => { };
   }
 
   const fetchPhotos = async () => {
     try {
       const response = await fetch(`https://res.cloudinary.com/${CLOUD_NAME}/image/list/${WEDDING_TAG}.json?t=${Date.now()}`);
-      
+
       if (!response.ok) {
         return;
       }
-      
+
       const data = await response.json();
       const photos: WeddingPhoto[] = data.resources.map((res: any) => {
         const ctx = res.context?.custom || {};
+        const resourceType = res.resource_type || 'image'; // Fallback a 'image' si no viene definido
         return {
           id: res.public_id,
-          url: `https://res.cloudinary.com/${CLOUD_NAME}/${res.resource_type}/upload/f_auto,q_auto/${res.public_id}.${res.format}`,
-          type: res.resource_type === 'video' ? 'video' : 'image',
+          url: `https://res.cloudinary.com/${CLOUD_NAME}/${resourceType}/upload/f_auto,q_auto/${res.public_id}.${res.format}`,
+          type: resourceType === 'video' ? 'video' : 'image',
           author: ctx.author || "Invitado Anónimo",
           dedication: ctx.dedication || "¡Felicidades a los novios!",
           timestamp: new Date(res.created_at).getTime()
         };
       });
-      
+
       photos.sort((a, b) => b.timestamp - a.timestamp);
       callback(photos);
     } catch (error) {
@@ -47,7 +48,7 @@ export const subscribeToPhotos = (callback: (photos: WeddingPhoto[]) => void) =>
   };
 
   fetchPhotos();
-  const interval = setInterval(fetchPhotos, 10000); 
+  const interval = setInterval(fetchPhotos, 10000);
   return () => clearInterval(interval);
 };
 
@@ -77,13 +78,13 @@ export const savePhotoToCloud = async (photo: { file: File; author: string; dedi
   formData.append('file', photo.file);
   formData.append('upload_preset', UPLOAD_PRESET);
   formData.append('tags', WEDDING_TAG);
-  
+
   const safeAuthor = sanitizeMetadata(photo.author);
   const safeDedication = sanitizeMetadata(photo.dedication);
   formData.append('context', `author=${safeAuthor}|dedication=${safeDedication}`);
 
   const resourceType = photo.file.type.startsWith('video') ? 'video' : 'image';
-  
+
   const response = await fetch(
     `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`,
     { method: 'POST', body: formData }

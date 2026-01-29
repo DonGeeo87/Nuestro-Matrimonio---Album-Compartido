@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Heart, Camera, Code, Download, Plus, CloudOff, 
-  MessageSquare, User, Clock, Tag, Video, Image as ImageIcon 
+import {
+  Heart, Camera, Code, Download, Plus, CloudOff,
+  MessageSquare, User, Clock, Tag, Video, Image as ImageIcon
 } from 'lucide-react';
 import Hero from './components/Hero.tsx';
 import Gallery from './components/Gallery.tsx';
@@ -23,7 +23,21 @@ const App = () => {
 
   const handleUpload = async (data: { file: File; author: string; dedication: string }) => {
     try {
-      await savePhotoToCloud(data);
+      const result = await savePhotoToCloud(data);
+
+      // Optimistic update: Agregamos la foto inmediatamente al estado local
+      // para que el usuario la vea sin esperar al siguiente ciclo de polling.
+      const newPhoto: WeddingPhoto = {
+        id: result.public_id || Math.random().toString(36).substr(2, 9),
+        url: result.secure_url || URL.createObjectURL(data.file),
+        type: data.file.type.startsWith('video') ? 'video' : 'image',
+        author: data.author,
+        dedication: data.dedication,
+        timestamp: Date.now()
+      };
+
+      setPhotos(prev => [newPhoto, ...prev]);
+
     } catch (error) {
       console.error("Error al guardar:", error);
       throw error;
@@ -67,16 +81,16 @@ const App = () => {
               <span className="font-bold">rocio-matias</span>
               <span className="ml-2 px-2 py-0.5 text-[10px] font-bold border border-[#d0d7de] rounded-full text-[#636c76] uppercase">Cloud-Live</span>
             </div>
-            
+
             <div className="flex items-center gap-2">
-              <button 
+              <button
                 onClick={downloadAllMedia}
                 className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 border border-[#d0d7de] rounded-md bg-white text-xs font-semibold hover:bg-[#f3f4f6]"
                 disabled={photos.length === 0}
               >
                 <Download className="w-3.5 h-3.5" /> Descargar Todo
               </button>
-              <button 
+              <button
                 onClick={() => setShowUpload(true)}
                 className="bg-[#1f883d] hover:bg-[#1a7f37] text-white px-4 py-1.5 rounded-md text-xs font-bold shadow-sm flex items-center gap-1.5"
               >
@@ -88,13 +102,13 @@ const App = () => {
       </nav>
 
       <div className="fixed bottom-10 right-6 md:right-12 z-50 group">
-        <button 
+        <button
           onClick={() => setShowUpload(true)}
           className="relative w-16 h-16 md:w-20 md:h-20 bg-rose-500 rounded-full flex items-center justify-center text-white shadow-xl hover:bg-rose-600 transition-all active:scale-90 pulse-effect"
         >
           <div className="flex flex-col items-center">
-             <Camera className="w-6 h-6 md:w-8 md:h-8" />
-             <span className="text-[10px] font-bold uppercase">Subir</span>
+            <Camera className="w-6 h-6 md:w-8 md:h-8" />
+            <span className="text-[10px] font-bold uppercase">Subir</span>
           </div>
         </button>
       </div>
